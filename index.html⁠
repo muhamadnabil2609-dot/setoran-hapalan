@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setoran & Poin Santri</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
+        body { background-color: #f4f6f9; padding: 15px; color: #333; }
+        .container { max-width: 500px; margin: 0 auto; background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        h2, h3 { text-align: center; color: #1b5e20; margin-bottom: 15px; }
+        .card { background: #e8f5e9; border-left: 5px solid #2e7d32; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        .card select, .card input, .card button { width: 100%; padding: 10px; margin: 5px 0 10px; border: 1px solid #ccc; border-radius: 6px; }
+        button { background-color: #2e7d32; color: white; border: none; font-weight: bold; cursor: pointer; }
+        button:hover { background-color: #1b5e20; }
+        .gift-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .gift-item { border: 1px solid #ddd; padding: 10px; border-radius: 8px; text-align: center; background: #fafafa; }
+        .gift-item button { background-color: #e65100; margin-top: 5px; }
+        .nav-tab { display: flex; justify-content: space-around; margin-bottom: 15px; border-bottom: 2px solid #eee; }
+        .nav-tab div { padding: 10px; cursor: pointer; font-weight: bold; color: #666; }
+        .nav-tab div.active { color: #2e7d32; border-bottom: 3px solid #2e7d32; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🕌 Pon Pes Ruuhul qur'an</h2>
+
+    <!-- Navigation -->
+    <div class="nav-tab">
+        <div id="tab1" class="active" onclick="switchTab('santri')">Aplikasi Santri</div>
+        <div id="tab2" onclick="switchTab('admin')">Input Ustadz</div>
+    </div>
+
+    <!-- TAMPILAN SANTRI -->
+    <div id="view-santri">
+        <div class="card">
+            <label><b>Pilih Nama Santri:</b></label>
+            <select id="santri-select" onchange="updateSantriView()">
+                <option value="Ahmad">Ahmad</option>
+                <option value="Budi">Budi</option>
+                <option value="Zaid">Zaid</option>
+            </select>
+            <p style="font-size: 1.2em; margin-top: 10px;">Total Poin: <b id="santri-poin" style="color: #2e7d32; font-size: 1.4em;">0</b> Pts</p>
+        </div>
+
+        <h3>🎁 Katalog Hadiah</h3>
+        <div class="gift-grid" id="gift-list">
+            <!-- Gift items generated dynamically -->
+        </div>
+    </div>
+
+    <!-- TAMPILAN ADMIN / USTADZ -->
+    <div id="view-admin" style="display: none;">
+        <div class="card">
+            <h3>Input Setoran Hafalan</h3>
+            <label>Santri:</label>
+            <select id="admin-santri-select">
+                <option value="Ahmad">Ahmad</option>
+                <option value="Budi">Budi</option>
+                <option value="Zaid">Zaid</option>
+            </select>
+
+            <label>Jenis Setoran:</label>
+            <select id="setoran-type">
+                <option value="10">Setoran 1 Halaman Qur'an (+10 Poin)</option>
+                <option value="150">Setoran 1 Juz Mutqin (+150 Poin)</option>
+                <option value="20">Setoran Matan Kitab (+20 Poin)</option>
+                <option value="5">Piket Kebersihan (+5 Poin)</option>
+            </select>
+
+            <button onclick="tambahPoin()">+ Tambahkan Poin</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Data Default (Tersimpan di Browser LocalStorage)
+    let santriData = JSON.parse(localStorage.getItem('santriData')) || {
+        'Ahmad': 50,
+        'Budi': 120,
+        'Zaid': 15
+    };
+
+    let gifts = [
+        { name: "Kitab Safinah", cost: 50 },
+        { name: "Pulpen & Buku Tulis", cost: 30 },
+        { name: "Peci Hitam", cost: 100 },
+        { name: "Minyak Wangi", cost: 80 }
+    ];
+
+    function switchTab(tab) {
+        if(tab === 'santri') {
+            document.getElementById('view-santri').style.display = 'block';
+            document.getElementById('view-admin').style.display = 'none';
+            document.getElementById('tab1').classList.add('active');
+            document.getElementById('tab2').classList.remove('active');
+        } else {
+            document.getElementById('view-santri').style.display = 'none';
+            document.getElementById('view-admin').style.display = 'block';
+            document.getElementById('tab1').classList.remove('active');
+            document.getElementById('tab2').classList.add('active');
+        }
+    }
+
+    function updateSantriView() {
+        const name = document.getElementById('santri-select').value;
+        document.getElementById('santri-poin').innerText = santriData[name] || 0;
+        renderGifts();
+    }
+
+    function renderGifts() {
+        const giftContainer = document.getElementById('gift-list');
+        const currentSantri = document.getElementById('santri-select').value;
+        const currentPoin = santriData[currentSantri] || 0;
+
+        giftContainer.innerHTML = '';
+        gifts.forEach(gift => {
+            const canAfford = currentPoin >= gift.cost;
+            giftContainer.innerHTML += `
+                <div class="gift-item">
+                    <h4>${gift.name}</h4>
+                    <p style="color: #666; font-size: 0.9em;">${gift.cost} Poin</p>
+                    <button onclick="tukarHadiah('${gift.name}', ${gift.cost})" 
+                            style="background-color: ${canAfford ? '#e65100' : '#ccc'};" 
+                            ${canAfford ? '' : 'disabled'}>
+                        ${canAfford ? 'Tukar' : 'Poin Kurang'}
+                    </button>
+                </div>
+            `;
+        });
+    }
+
+    function tambahPoin() {
+        const name = document.getElementById('admin-santri-select').value;
+        const poinAdded = parseInt(document.getElementById('setoran-type').value);
+
+        santriData[name] = (santriData[name] || 0) + poinAdded;
+        localStorage.setItem('santriData', JSON.stringify(santriData));
+        alert(`Berhasil menambahkan ${poinAdded} poin untuk ${name}!`);
+        updateSantriView();
+    }
+
+    function tukarHadiah(giftName, cost) {
+        const name = document.getElementById('santri-select').value;
+        if (santriData[name] >= cost) {
+            santriData[name] -= cost;
+            localStorage.setItem('santriData', JSON.stringify(santriData));
+            alert(`Selamat! ${name} berhasil menukarkan ${giftName}. Silakan ambil ke Ustadz.`);
+            updateSantriView();
+        }
+    }
+
+    // Initialize
+    updateSantriView();
+</script>
+</body>
+</html>
