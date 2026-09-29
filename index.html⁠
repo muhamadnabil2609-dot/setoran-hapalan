@@ -156,3 +156,126 @@
 </script>
 </body>
 </html>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Setoran & Poin Santri</title>
+<style>
+* { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
+body { background-color: #f4f6f9; padding: 15px; color: #333; }
+.container { max-width: 500px; margin: 0 auto; background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+h2, h3 { text-align: center; color: #1b5e20; margin-bottom: 15px; }
+.card { background: #e8f5e9; border-left: 5px solid #2e7d32; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+.card select, .card input, .card button { width: 100%; padding: 10px; margin: 5px 0 10px 0; border: 1px solid #ccc; border-radius: 6px; }
+button { background-color: #2e7d32; color: white; border: none; font-weight: bold; cursor: pointer; }
+button:hover { background-color: #1b5e20; }
+.santri-list { margin-top: 10px; max-height: 280px; overflow-y: auto; }
+.santri-item { background: #f9f9f9; padding: 10px 12px; border-radius: 6px; margin-bottom: 8px; border: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center; }
+.rank { font-weight: bold; color: #1b5e20; width: 25px; }
+</style>
+</head>
+<body>
+<div class="container">
+<h2>📖 Setoran & Poin Santri</h2>
+<!-- Input Setoran Hafalan -->
+<div class="card">
+<h3>Catat Setoran Hafalan</h3>
+<label>Pilih Santri:</label>
+<select id="santri-select"></select>
+<label>Surah / Juz:</label>
+<input type="text" id="surah-input" placeholder="Contoh: Al-Baqarah ayat 1-5">
+<label>Kategori:</label>
+<select id="kategori-select">
+<option value="lancar">Lancar (+10 Poin)</option>
+<option value="ulang">Perlu Diulang (+5 Poin)</option>
+</select>
+<button onclick="tambahSetoran()">Simpan Setoran</button>
+</div>
+<!-- Daftar Poin Santri & Peringkat -->
+<div class="card" style="background: #e3f2fd; border-left-color: #1565c0;">
+<h3>🏆 Peringkat & Poin Santri</h3>
+<div id="santri-list" class="santri-list"></div>
+</div>
+<!-- Tukar Hadiah -->
+<div class="card" style="background: #fff3e0; border-left-color: #ef6c00;">
+<h3>🎁 Tukar Hadiah</h3>
+<label>Pilih Santri:</label>
+<select id="tukar-santri-select"></select>
+<label>Pilih Hadiah:</label>
+<select id="hadiah-select">
+<option value="Kitab Baru|50">Kitab Baru (50 Poin)</option>
+<option value="Pensil & Buku Catatan|30">Pensil & Buku Catatan (30 Poin)</option>
+<option value="Snack Enak|20">Snack Enak (20 Poin)</option>
+</select>
+<button onclick="tukarHadiah()" style="background-color: #ef6c00;">Tukar Poin</button>
+</div>
+</div>
+<script>
+// Inisialisasi daftar nama santri lengkap dengan urutan nomor 1 s.d. 10
+let santriData = JSON.parse(localStorage.getItem('santriData')) || {
+"1. Muhammad Najib Hauzan": 0,
+"2. Muhammad Afzan Hizaji": 0,
+"3. Ahmad Matin": 0,
+"4. Dian Jaya Saputra": 0,
+"5. Akib Naswan Riza Ahmad": 0,
+"6. Muhammad Damar Al Muiz": 0,
+"7. Muhammad Wildan Al-Habsyie": 0,
+"8. Muhammad Ikhsan Albar Janji": 0,
+"9. Tama": 0,
+"10. (Santri Tambahan)": 0
+};
+function updateSantriView() {
+const select1 = document.getElementById('santri-select');
+const select2 = document.getElementById('tukar-santri-select');
+const listDiv = document.getElementById('santri-list');
+select1.innerHTML = '';
+select2.innerHTML = '';
+listDiv.innerHTML = '';
+// Urutkan santri berdasarkan poin tertinggi (Peringkat)
+let sortedSantri = Object.entries(santriData).sort((a, b) => b[1] - a[1]);
+// Masukkan opsi ke dropdown select
+sortedSantri.forEach(([name]) => {
+select1.innerHTML += ⁠<option value="${name}">${name}</option>⁠;
+select2.innerHTML += ⁠<option value="${name}">${name}</option>⁠;
+});
+// Tampilkan daftar peringkat dengan nomor urut
+sortedSantri.forEach(([name, points], index) => {
+let medal = index === 0 ? '🥇 ' : index === 1 ? '🥈 ' : index === 2 ? '🥉 ' : '';
+listDiv.innerHTML += ⁠ <div class="santri-item"> <span><span class="rank">${index + 1}.</span> ${medal}<b>${name}</b></span> <span><b>${points} Poin</b></span> </div>⁠;
+});
+}
+function tambahSetoran() {
+const name = document.getElementById('santri-select').value;
+const surah = document.getElementById('surah-input').value;
+const kategori = document.getElementById('kategori-select').value;
+if (!surah) {
+alert('Mohon isi surah atau hafalan terlebih dahulu!');
+return;
+}
+let poin = (kategori === 'lancar') ? 10 : 5;
+santriData[name] += poin;
+localStorage.setItem('santriData', JSON.stringify(santriData));
+document.getElementById('surah-input').value = '';
+updateSantriView();
+alert(⁠Berhasil! ${name} mendapat +${poin} poin.⁠);
+}
+function tukarHadiah() {
+const name = document.getElementById('tukar-santri-select').value;
+const hadiahVal = document.getElementById('hadiah-select').value;
+const [giftName, costStr] = hadiahVal.split('|');
+const cost = parseInt(costStr);
+if (santriData[name] >= cost) {
+santriData[name] -= cost;
+localStorage.setItem('santriData', JSON.stringify(santriData));
+alert(⁠Selamat! ${name} berhasil menukarkan ${giftName}. Silakan ambil ke Ustadz.⁠);
+updateSantriView();
+} else {
+alert('Maaf, poin santri belum mencukupi!');
+}
+}
+updateSantriView();
+</script>
+</body>
+</html>
